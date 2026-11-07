@@ -1,43 +1,23 @@
-name: Build and publish beeped feed
+name: Build beeped feed
 on:
   schedule:
     - cron: "0 */6 * * *"   # every 6 hours; beeped versions sometimes appear after the episode
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-concurrency:
-  group: pages
-  cancel-in-progress: false
+  contents: write
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - name: Set feed URL
-        shell: bash
-        run: |
-          if [[ -n "$PAGES_BASE_URL" ]]; then
-            pages_base_url="${PAGES_BASE_URL%/}"
-          else
-            owner="${GITHUB_REPOSITORY%%/*}"
-            repository="${GITHUB_REPOSITORY#*/}"
-            pages_base_url="https://${owner}.github.io/${repository}"
-          fi
-          echo "FEED_URL=${pages_base_url}/tal-clean.xml" >> "$GITHUB_ENV"
-        env:
-          PAGES_BASE_URL: ${{ vars.PAGES_BASE_URL }}
       - run: dotnet run --project TalCleanFeed -- docs/tal-clean.xml
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: docs
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Commit feed
+        run: |
+          git config user.name "feed-bot"
+          git config user.email "feed-bot@users.noreply.github.com"
+          git add docs/tal-clean.xml
+          git diff --staged --quiet || git commit -m "Update feed"
+          git push
