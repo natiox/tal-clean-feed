@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet run --project TalFeed -- docs/tal-clean.xml
+      - run: dotnet run --project TalCleanFeed -- docs/tal-clean.xml
       - name: Commit feed
         run: |
           git config user.name "feed-bot"
