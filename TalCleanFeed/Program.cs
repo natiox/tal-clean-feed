@@ -14,6 +14,18 @@ var cleanRx = new Regex(
 var doc = XDocument.Parse(await http.GetStringAsync(SourceFeed));
 var channel = doc.Root!.Element("channel")!;
 
+var feedUrl = Environment.GetEnvironmentVariable("FEED_URL");
+if (!string.IsNullOrWhiteSpace(feedUrl))
+{
+    XNamespace atom = "http://www.w3.org/2005/Atom";
+    XNamespace itunes = "http://www.itunes.com/dtds/podcast-1.0.dtd";
+
+    var selfLink = channel.Element(atom + "link");
+    selfLink?.SetAttributeValue("href", feedUrl);
+
+    channel.Element(itunes + "new-feed-url")?.Remove();
+}
+
 // Make it obvious in your podcast app that this is the modified feed
 var title = channel.Element("title");
 if (title != null && !title.Value.Contains("Beeped"))
